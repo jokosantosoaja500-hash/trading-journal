@@ -113,7 +113,7 @@ main{padding:16px;max-width:1440px;margin:0 auto;padding-bottom:calc(96px + var(
 .stat .strip{position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:0 4px 4px 0}
 .pos{color:var(--profit)} .neg{color:var(--loss)} .neutral{color:var(--fg-subtle)}
 /* panels */
-.panels{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px}
+.panels{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px;align-items:start}
 @media(min-width:768px){.panels{grid-template-columns:1fr 1fr}}
 @media(min-width:1024px){.panels{grid-template-columns:repeat(3,1fr)}}
 .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow-card);display:flex;flex-direction:column;min-height:180px}
@@ -122,7 +122,7 @@ main{padding:16px;max-width:1440px;margin:0 auto;padding-bottom:calc(96px + var(
 .panel-head h3{margin:0;font-size:13.5px;font-weight:700;letter-spacing:-.2px;flex:1}
 .chip{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--bg-subtle);color:var(--fg-subtle);border:1px solid var(--border);white-space:nowrap}
 .chip.done{background:var(--profit-bg);color:var(--profit);border-color:rgba(16,185,129,.3)}
-.check-list{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto}
+.check-list{display:flex;flex-direction:column;gap:5px}
 .check-item{display:flex;align-items:flex-start;gap:9px;padding:7px 9px;border-radius:8px;transition:.14s;cursor:pointer}
 .check-item:hover{background:var(--bg-subtle)}
 .check-item.on{background:var(--accent-bg)}
@@ -240,7 +240,7 @@ tbody tr:hover{background:var(--bg-subtle)}
 .panel,.stat,.chart-card,.table-card{transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
 .empty{background:var(--card-hover);border:1px dashed var(--border-hover);border-radius:var(--radius-md);padding:28px 18px}
 .empty i{font-size:30px;opacity:.5;margin-bottom:10px}
-.sop-group{padding:8px 0 10px;border-bottom:1px solid var(--border)}
+.sop-group{background:var(--bg-subtle);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 10px 8px;margin-bottom:8px}
 .sop-group:last-child{border-bottom:0}
 .check-item{transition:background .15s ease,transform .15s ease}
 .check-item:has(input:checked){background:var(--accent-bg)}
@@ -383,9 +383,20 @@ function storage(){ return (typeof localforage !== 'undefined' && localforage) ?
 function migrateState(){
   var groups = ['narrative','profile','reversal','confirmation','wick','entry'];
   var ok = Array.isArray(state.sop) && state.sop.length &&
-    groups.every(function(g){ return state.sop.some(function(it){ return it.group === g; }); });
+    groups.every(function(g){ return state.sop.some(function(it){ return it.group === g && typeof it.text === 'string' && it.text.trim(); }); });
   if (!ok) {
     state.sop = JSON.parse(JSON.stringify(DEFAULT_SOP));
+    saveState();
+  }
+  if (!Array.isArray(state.rules) || !state.rules.length ||
+      !state.rules.every(function(it){ return it && typeof it.text === 'string' && it.text.trim(); })) {
+    state.rules = [
+      {text:'Risiko maksimal 1% per trade', done:false, images:[]},
+      {text:'Tidak trading saat emosi / setelah loss besar', done:false, images:[]},
+      {text:'Tunggu setup valid (konfirmasi 2 timeframe)', done:false, images:[]},
+      {text:'Pasang SL sebelum entry', done:false, images:[]},
+      {text:'Maksimal 3 trade per hari', done:false, images:[]}
+    ];
     saveState();
   }
 }
@@ -494,15 +505,29 @@ function renderStats(){
 }
 function renderPanels(){
   var el = document.getElementById('panels');
+  var grp = function(g){ return state.sop.filter(function(it){return it.group===g;}); };
   el.innerHTML = panelHtml('rules','Trading Rules','fa-scale-balanced',state.rules) +
-                 panelHtml('sop','SOP Entry','fa-list-check',state.sop) +
+                 panelHtml('sop-narrative','Narrative','fa-route',grp('narrative'),'narrative') +
+                 panelHtml('sop-profile','Profile','fa-layer-group',grp('profile'),'profile') +
+                 panelHtml('sop-reversal','True Reversal Variant','fa-arrows-rotate',grp('reversal'),'reversal') +
+                 panelHtml('sop-confirmation','Entry Confirmation','fa-circle-check',grp('confirmation'),'confirmation') +
+                 panelHtml('sop-wick','Wick Size Candle','fa-chart-simple',grp('wick'),'wick') +
+                 panelHtml('sop-entry','Entry','fa-flag-checkered',grp('entry'),'entry') +
                  sessionsHtml();
   renderThumbs();
 }
-function panelHtml(key, title, icon, list){
+function panelHtml(key, title, icon, list, sopGroup){
   var done = list.filter(function(i){return i.done;}).length;
   var all = list.length && done === list.length;
-  var sections = []; if (key === 'sop'){
+  var sections = [];
+  if (sopGroup){
+    sections.push('<div class="check-list">'+list.map(function(it){
+      var gi = state.sop.indexOf(it);
+      if (gi < 0) return '';
+      return '<label class="check-item '+(it.done?'on':'')+'"><input type="checkbox" '+(it.done?'checked':'')+
+        ' onchange="toggleCheck(\'sop\','+gi+',this.checked)"><span>'+escapeHtml(it.text)+'</span></label>';
+    }).join('') || '<div class="empty">Belum ada item</div>')+'</div>';
+  } else if (key === 'sop'){
     var groups = ['narrative','profile','reversal','confirmation','wick','entry'];
     var labels = {narrative:'Narrative',profile:'Profile',reversal:'True Reversal Variant',confirmation:'Entry Confirmation',wick:'Wick Size Candle',entry:'Entry'};
     groups.forEach(function(g){
@@ -521,7 +546,7 @@ function panelHtml(key, title, icon, list){
         ' onchange="toggleCheck(\''+key+'\','+i+',this.checked)"><span>'+escapeHtml(it.text)+'</span></label>';
     }).join('') || '<div class="empty">Belum ada item</div>')+'</div>';
   }
-  var headerChip = key==='sop' ? '' : '<span class="chip '+(all?'done':'')+'">'+done+'/'+list.length+'</span>';
+  var headerChip = (key==='sop' || sopGroup) ? (sopGroup?'<span class="chip '+(all?'done':'')+'">'+done+'/'+list.length+'</span>':'') : '<span class="chip '+(all?'done':'')+'">'+done+'/'+list.length+'</span>';
   return '<div class="panel"><div class="panel-head"><i class="fa-solid '+icon+'"></i><h3>'+escapeHtml(title)+'</h3>'+headerChip+'</div>'
     +sections.join('')
     +'<div style="margin-top:auto;padding-top:10px"><button class="btn btn-xs" onclick="openListModal(\''+key+'\')"><i class="fa-solid fa-pen"></i>Kelola</button></div></div>';
