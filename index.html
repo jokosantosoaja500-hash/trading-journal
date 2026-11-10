@@ -301,6 +301,26 @@ tbody tr:hover{background:var(--bg-subtle)}
 
 <script>
 /* ============ STATE ============ */
+var DEFAULT_SOP = [
+  {text:'Internal Range Liquidity To Eksternal Range Liquidity', done:false, group:'narrative', images:[]},
+  {text:'Eksternal Range Liquidity To Internal Range Liquidity', done:false, group:'narrative', images:[]},
+  {text:'Eksternal Range Liquidity To Eksternal Range Liquidity', done:false, group:'narrative', images:[]},
+  {text:'Weakly Profile', done:false, group:'profile', images:[]},
+  {text:'Daily Profile', done:false, group:'profile', images:[]},
+  {text:'6 Hour Profile', done:false, group:'profile', images:[]},
+  {text:'4 Hour Profile', done:false, group:'profile', images:[]},
+  {text:'1 Hour Profile', done:false, group:'profile', images:[]},
+  {text:'SMT + PSP (Trade C3)', done:false, group:'reversal', images:[]},
+  {text:'PSP + SMT (Trade C2)', done:false, group:'reversal', images:[]},
+  {text:'2 Stage SMT', done:false, group:'reversal', images:[]},
+  {text:'Liquidity Sweep', done:false, group:'confirmation', images:[]},
+  {text:'SMT', done:false, group:'confirmation', images:[]},
+  {text:'CISD', done:false, group:'confirmation', images:[]},
+  {text:'Small Wick', done:false, group:'wick', images:[]},
+  {text:'Large Wick', done:false, group:'wick', images:[]},
+  {text:'Reversal', done:false, group:'entry', images:[]},
+  {text:'Continuation', done:false, group:'entry', images:[]}
+];
 var LS_KEY = 'tj_sop_state_v1';
 var state = {
   initialBalance: 1000,
@@ -343,10 +363,20 @@ function storage(){ return (typeof localforage !== 'undefined' && localforage) ?
   setItem:function(k,v){localStorage.setItem(k,JSON.stringify(v));return Promise.resolve(v)}
 };}
 
+function migrateState(){
+  var groups = ['narrative','profile','reversal','confirmation','wick','entry'];
+  var ok = Array.isArray(state.sop) && state.sop.length &&
+    groups.every(function(g){ return state.sop.some(function(it){ return it.group === g; }); });
+  if (!ok) {
+    state.sop = JSON.parse(JSON.stringify(DEFAULT_SOP));
+    saveState();
+  }
+}
 function loadState(){
   return storage().getItem(LS_KEY).then(function(saved){
     if (saved && typeof saved === 'object') {
       state = Object.assign(state, saved);
+      migrateState();
     }
     renderAll();
   }).catch(function(err){ console.warn(err); renderAll(); });
