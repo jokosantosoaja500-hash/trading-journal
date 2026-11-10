@@ -114,12 +114,35 @@ main{padding:12px;max-width:1800px;margin:0 auto;padding-bottom:calc(90px + var(
 .stat .strip{position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:0 4px 4px 0}
 .pos{color:var(--profit)} .neg{color:var(--loss)} .neutral{color:var(--fg-subtle)}
 /* panels */
-.panels{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;align-items:start;width:100%;max-width:none}
+.panels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:10px;align-items:start;width:100%;max-width:none}
 @media(max-width:1023px){.panels{grid-template-columns:1fr}}
 .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;box-shadow:var(--shadow-card);display:flex;flex-direction:column;height:auto}
 .panel-rules{grid-column:1;grid-row:1;align-self:stretch}
 .panel-sessions{grid-column:1;grid-row:2;align-self:stretch}
 .panel-sop{grid-column:2;grid-row:1/span 2;align-self:stretch}
+.panel-cal{grid-column:3;grid-row:1/span 2;align-self:stretch}
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:8px}
+.cal-head .cal-month{font-size:13px;font-weight:700;flex:1;text-align:center}
+.cal-nav{width:28px;height:28px;border:1px solid var(--border);background:var(--bg-subtle);color:var(--fg);border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.cal-nav:hover{border-color:var(--border-hover);background:var(--card-hover)}
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
+.cal-dow span{font-size:10px;color:var(--muted);font-weight:700;text-align:center;padding:2px 0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-cell{min-height:52px;border:1px solid var(--border);border-radius:8px;padding:4px 4px 3px;background:var(--bg-subtle);cursor:default;display:flex;flex-direction:column;gap:1px}
+.cal-cell.empty{background:transparent;border-color:transparent}
+.cal-cell.has{cursor:pointer;border-color:var(--border-hover)}
+.cal-cell.has:hover{background:var(--card-hover)}
+.cal-day{font-size:10.5px;color:var(--fg-subtle);font-weight:600;line-height:1}
+.cal-pnl{font-size:10px;font-weight:700;line-height:1.2}
+.cal-cnt{font-size:9.5px;color:var(--muted);line-height:1.2}
+.cal-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.cal-stat{background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:6px 7px}
+.cal-stat .l{font-size:9.5px;color:var(--muted);font-weight:600;margin-bottom:2px}
+.cal-stat .v{font-size:11.5px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.cal-pop{position:relative;margin-top:6px}
+.cal-pop-list{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.cal-pop-item{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-subtle);cursor:pointer;font-size:11.5px}
+.cal-pop-item:hover{background:var(--card-hover);border-color:var(--border-hover)}
 .panel-head{display:flex;align-items:center;gap:7px;margin-bottom:7px}
 .panel-head i{font-size:14px;color:var(--accent)}
 .panel-head h3{margin:0;font-size:13.5px;font-weight:700;letter-spacing:-.2px;flex:1}
@@ -511,6 +534,7 @@ function renderPanels(){
   el.innerHTML = panelHtml('rules','Trading Rules','fa-scale-balanced',state.rules, null, 'panel-rules') +
                  sessionsHtml() +
                  panelHtml('sop','SOP Entry','fa-list-check',state.sop, null, 'panel-sop') +
+                 calendarPanelHtml();
   renderThumbs();
 }
 function panelHtml(key, title, icon, list, sopGroup, panelClass){
@@ -721,6 +745,88 @@ function renderCharts(){
     plugins:[centerText]
   });
 }
+
+
+/* ============ CALENDAR ============ */
+var calNow = new Date();
+var calMonth = calNow.getMonth();
+var calYear = calNow.getFullYear();
+var calSelectedDate = '';
+
+function calPrev(){ calMonth--; if(calMonth<0){calMonth=11; calYear--; } calSelectedDate=''; renderPanels(); }
+function calNext(){ calMonth++; if(calMonth>11){calMonth=0; calYear++; } calSelectedDate=''; renderPanels(); }
+function calSelectDate(ds){ calSelectedDate = (calSelectedDate===ds?'':ds); renderPanels(); }
+
+function calTradesForMonth(y,m){
+  var mm = String(m+1).padStart(2,'0');
+  var prefix = y+'-'+mm+'-';
+  return (state.trades||[]).filter(function(t){
+    var d = (t.date||'').slice(0,10);
+    return d.indexOf(prefix)===0;
+  });
+}
+function calTradesForDate(ds){
+  return (state.trades||[]).filter(function(t){ return (t.date||'').slice(0,10)===ds; })
+    .sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+}
+function calMonthStats(y,m){
+  var ts = calTradesForMonth(y,m), n=ts.length, wins=0, net=0;
+  ts.forEach(function(t){ net += num(t.pnl); if(t.result==='win') wins++; });
+  var ret = (function(){ var init=num(state.initialBalance); return init? (net/init*100):0; })();
+  return {n:n,wins:wins,net:net,ret:ret};
+}
+function calendarPanelHtml(){
+  var names=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  var dow=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+  var first = new Date(calYear, calMonth, 1).getDay();
+  var days = new Date(calYear, calMonth+1, 0).getDate();
+  var byDate = {};
+  calTradesForMonth(calYear, calMonth).forEach(function(t){
+    var ds=(t.date||'').slice(0,10); if(!ds) return;
+    if(!byDate[ds]) byDate[ds]={pnl:0,count:0,trades:[]};
+    byDate[ds].pnl += num(t.pnl); byDate[ds].count++; byDate[ds].trades.push(t);
+  });
+  var cells='';
+  for(var i=0;i<first;i++) cells += '<div class="cal-cell empty"></div>';
+  for(var d=1; d<=days; d++){
+    var ds = calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var info = byDate[ds];
+    var has = info && info.count>0;
+    var inner = '<div class="cal-day">'+d+'</div>';
+    if(has){
+      var sign = info.pnl>=0 ? '+' : '';
+      inner += '<div class="cal-pnl">'+sign+fmtMoney(info.pnl)+'</div>';
+      inner += '<div class="cal-cnt">'+info.count+' Trade</div>';
+    }
+    cells += '<div class="cal-cell'+(has?' has':'')+'" '+(has?'onclick="calSelectDate(\''+ds+'\')"':'')+'>'+inner+'</div>';
+  }
+  var pop='';
+  if(calSelectedDate){
+    var list = calTradesForDate(calSelectedDate);
+    if(list.length){
+      pop = '<div class="cal-pop"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">'+escapeHtml(calSelectedDate)+'</div><div class="cal-pop-list">' +
+        list.map(function(t,idx){
+          var label = (idx+1)+'. '+escapeHtml(t.pair||'Trade')+' — '+escapeHtml((t.result||'').toUpperCase());
+          return '<div class="cal-pop-item" onclick="openTradeModal(\''+t.id+'\')"><span>'+label+'</span><span class="mono">'+(num(t.pnl)>=0?'+':'')+fmtMoney(num(t.pnl))+'</span></div>';
+        }).join('') + '</div></div>';
+    }
+  }
+  var st = calMonthStats(calYear, calMonth);
+  var retStr = (st.ret>=0?'+':'')+st.ret.toFixed(2)+'%';
+  return '<div class="panel panel-cal"><div class="panel-head"><i class="fa-solid fa-calendar-days"></i><h3>Kalender Trade</h3></div>' +
+    '<div class="cal-head"><button class="cal-nav" onclick="calPrev()"><i class="fa-solid fa-chevron-left"></i></button>' +
+    '<div class="cal-month">'+names[calMonth]+' '+calYear+'</div>' +
+    '<button class="cal-nav" onclick="calNext()"><i class="fa-solid fa-chevron-right"></i></button></div>' +
+    '<div class="cal-dow">'+dow.map(function(d){return '<span>'+d+'</span>';}).join('')+'</div>' +
+    '<div class="cal-grid">'+cells+'</div>' + pop +
+    '<div class="cal-stats">' +
+      '<div class="cal-stat"><div class="l">Perdagangan</div><div class="v">'+st.n+'</div></div>' +
+      '<div class="cal-stat"><div class="l">Kemenangan</div><div class="v">'+st.wins+'</div></div>' +
+      '<div class="cal-stat"><div class="l">Net P&amp;L</div><div class="v">'+(st.net>=0?'+':'')+fmtMoney(st.net)+'</div></div>' +
+      '<div class="cal-stat"><div class="l">Return</div><div class="v">'+retStr+'</div></div>' +
+    '</div></div>';
+}
+
 
 function renderAll(){ renderStats(); renderPanels(); renderTrades(); renderCharts(); updateSyncBar(); }
 
