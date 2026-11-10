@@ -502,7 +502,7 @@ function panelHtml(key, title, icon, list){
     sections.push('<div class="check-list">'+list.map(function(it,i){
       return '<label class="check-item '+(it.done?'on':'')+'"><input type="checkbox" '+(it.done?'checked':'')+
         ' onchange="toggleCheck(\''+key+'\','+i+',this.checked)"><span>'+escapeHtml(it.text)+'</span></label>';
-    }).join('') || '<div class="empty">Belum ada item</div>'+'</div>';
+    }).join('') || '<div class="empty">Belum ada item</div>')+'</div>';
   }
   var headerChip = key==='sop' ? '' : '<span class="chip '+(all?'done':'')+'">'+done+'/'+list.length+'</span>';
   return '<div class="panel"><div class="panel-head"><i class="fa-solid '+icon+'"></i><h3>'+escapeHtml(title)+'</h3>'+headerChip+'</div>'
