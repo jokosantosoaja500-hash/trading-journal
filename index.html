@@ -314,25 +314,26 @@ var state = {
     {text:'Maksimal 3 trade per hari', done:false, images:[]}
   ],
   sop: [
-    {text:'Internal Range Liquidity To Eksternal Range Liquidity', done:false, images:[]},
-    {text:'Eksternal Range Liquidity To Internal Range Liquidity', done:false, images:[]},
-    {text:'Eksternal Range Liquidity To Eksternal Range Liquidity', done:false, images:[]},
-    {text:'Weakly Profile', done:false, images:[]},
-    {text:'Daily Profile', done:false, images:[]},
-    {text:'6 Hour Profile', done:false, images:[]},
-    {text:'4 Hour Profile', done:false, images:[]},
-    {text:'1 Hour Profile', done:false, images:[]},
-    {text:'True Reversal 1', done:false, images:[]},
-    {text:'True Reversal 2', done:false, images:[]},
-    {text:'True Reversal 3', done:false, images:[]},
-    {text:'CISD', done:false, images:[]},
-    {text:'FVG', done:false, images:[]},
-    {text:'Liquidity Sweep', done:false, images:[]},
-    {text:'SMT', done:false, images:[]},
-    {text:'Small Wick', done:false, images:[]},
-    {text:'Large Wick', done:false, images:[]}
+    {text:'Internal Range Liquidity To Eksternal Range Liquidity', done:false, group:'narrative', images:[]},
+    {text:'Eksternal Range Liquidity To Internal Range Liquidity', done:false, group:'narrative', images:[]},
+    {text:'Eksternal Range Liquidity To Eksternal Range Liquidity', done:false, group:'narrative', images:[]},
+    {text:'Weakly Profile', done:false, group:'profile', images:[]},
+    {text:'Daily Profile', done:false, group:'profile', images:[]},
+    {text:'6 Hour Profile', done:false, group:'profile', images:[]},
+    {text:'4 Hour Profile', done:false, group:'profile', images:[]},
+    {text:'1 Hour Profile', done:false, group:'profile', images:[]},
+    {text:'SMT + PSP (Trade C3)', done:false, group:'reversal', images:[]},
+    {text:'PSP + SMT (Trade C2)', done:false, group:'reversal', images:[]},
+    {text:'2 Stage SMT', done:false, group:'reversal', images:[]},
+    {text:'Liquidity Sweep', done:false, group:'confirmation', images:[]},
+    {text:'SMT', done:false, group:'confirmation', images:[]},
+    {text:'CISD', done:false, group:'confirmation', images:[]},
+    {text:'Small Wick', done:false, group:'wick', images:[]},
+    {text:'Large Wick', done:false, group:'wick', images:[]},
+    {text:'Reversal', done:false, group:'entry', images:[]},
+    {text:'Continuation', done:false, group:'entry', images:[]}
   ],
-  drive: {url:'', token:''}
+  drive: {url:'', token:'', nytimezone:'America/New_York'}
 };
 var charts = {equity:null, dist:null};
 
@@ -377,6 +378,20 @@ function fmtCompact(v){
 }
 function fmtDate(d){ if(!d) return '—'; var p = String(d).split('T')[0].split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : d; }
 function todayStr(){ var d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function todayStrNY(){
+  var now = new Date();
+  var nyt = new Date(now.toLocaleString('en-US', {timeZone:'America/New_York'}));
+  return nyt.getFullYear()+'-'+String(nyt.getMonth()+1).padStart(2,'0')+'-'+String(nyt.getDate()).padStart(2,'0');
+}
+function getNYDate(d){
+  var date = new Date(d || new Date());
+  var nyt = new Date(date.toLocaleString('en-US', {timeZone:'America/New_York'}));
+  return nyt.getFullYear()+'-'+String(nyt.getMonth()+1).padStart(2,'0')+'-'+String(nyt.getDate()).padStart(2,'0');
+}
+function countTradesNYToday(){
+  var today = todayStrNY();
+  return (state.trades || []).filter(function(t){ return getNYDate(t.date) === today; }).length;
+}
 function toast(msg, type){
   type = type || 'info';
   var ic = type==='success' ? 'fa-circle-check' : type==='error' ? 'fa-circle-exclamation' : 'fa-circle-info';
@@ -440,14 +455,29 @@ function renderPanels(){
 function panelHtml(key, title, icon, list){
   var done = list.filter(function(i){return i.done;}).length;
   var all = list.length && done === list.length;
-  var items = list.map(function(it, i){
-    return '<label class="check-item '+(it.done?'on':'')+'"><input type="checkbox" '+(it.done?'checked':'')+
-      ' onchange="toggleCheck(\''+key+'\','+i+',this.checked)"><span>'+escapeHtml(it.text)+'</span></label>';
-  }).join('');
-  return '<div class="panel"><div class="panel-head"><i class="fa-solid '+icon+'"></i><h3>'+escapeHtml(title)+'</h3>'+
-    '<span class="chip '+(all?'done':'')+'">'+done+'/'+list.length+'</span></div>'+
-    '<div class="check-list">'+(items || '<div class="empty">Belum ada item</div>')+'</div>'+
-    '<div style="margin-top:auto;padding-top:10px"><button class="btn btn-xs" onclick="openListModal(\''+key+'\')"><i class="fa-solid fa-pen"></i>Kelola</button></div></div>';
+  var sections = []; if (key === 'sop'){
+    var groups = ['narrative','profile','reversal','confirmation','wick','entry'];
+    var labels = {narrative:'Narrative',profile:'Profile',reversal:'True Reversal Variant',confirmation:'Entry Confirmation',wick:'Wick Size Candle',entry:'Entry'};
+    groups.forEach(function(g){
+      var items = list.filter(function(it){return it.group === g;});
+      if (!items.length) return;
+      sections.push('<div class="sop-group" style="margin-bottom:8px"><h4 style="margin:0 0 4px 0;font-size:12px;font-weight:600;color:var(--accent)">'+escapeHtml(labels[g])+'</h4>'+
+        '<div class="check-list">'+items.map(function(it,i){
+          var gi = list.indexOf(it);
+          return '<label class="check-item '+(it.done?'on':'')+'\"><input type="checkbox" '+(it.done?'checked':'')+
+            ' onchange="toggleCheck(\''+key+'\','+gi+',this.checked)"><span>'+escapeHtml(it.text)+'</span></label>';
+        }).join('')+'</div></div>');
+    });
+  } else {
+    sections.push('<div class="check-list">'+list.map(function(it,i){
+      return '<label class="check-item '+(it.done?'on':'')+'\"><input type="checkbox" '+(it.done?'checked':'')+
+        ' onchange="toggleCheck(\''+key+'\','+i+',this.checked)"><span>'+escapeHtml(it.text)+'</span></label>';
+    }).join('') || '<div class="empty">Belum ada item</div>'+'</div>';
+  }
+  var headerChip = key==='sop' ? '' : '<span class="chip '+(all?'done':'')+'\">'+done+'/'+list.length+'</span>';
+  return '<div class="panel"><div class="panel-head"><i class="fa-solid '+icon+'"></i><h3>'+escapeHtml(title)+'</h3>'+headerChip+'</div>'
+    +sections.join('')
+    +'<div style="margin-top:auto;padding-top:10px"><button class="btn btn-xs" onclick="openListModal(\''+key+'\')"><i class="fa-solid fa-pen"></i>Kelola</button></div></div>';
 }
 function renderThumbs(){
   // thumbnails dimuat di dalam modal kelola; panel cukup cek gambar pertama
@@ -461,26 +491,48 @@ function renderThumbs(){
   });
   // no-op: gambar tampil di modal kelola
 }
-function sessionsHtml(){
+function nyParts(){
   var now = new Date();
-  var h = now.getUTCHours() + now.getUTCMinutes()/60;
+  var opts = {timeZone:'America/New_York', hour12:false, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'};
+  var str = now.toLocaleString('en-US', opts);
+  var p = str.split(/[\s,/-]+/);
+  return {
+    month:p[0], day:p[1], year:p[2], hour:String(parseInt(p[3],10)).padStart(2,'0'), minute:p[4],
+    clock:String(parseInt(p[3],10)).padStart(2,'0')+':'+p[4]
+  };
+}
+function nyOffset(){
+  var now = new Date();
+  var utc = new Date(now.toLocaleString('en-US',{timeZone:'UTC'}));
+  var ny  = new Date(now.toLocaleString('en-US',{timeZone:'America/New_York'}));
+  var off = Math.round((ny - utc)/3600000);
+  return {val:off, label:(off<0?'UTC'+off:'UTC+'+off), dst:(off===-4)};
+}
+function sessionsHtml(){
+  var ny = nyParts(); var off = nyOffset();
+  var h = parseInt(ny.hour,10) + parseInt(ny.minute,10)/60;
   var sess = [
-    {n:'Asia', open: h>=0 && h<9, h:'00:00–09:00 UTC'},
-    {n:'London', open: h>=7 && h<16, h:'07:00–16:00 UTC'},
-    {n:'New York', open: h>=13 && h<22, h:'13:00–22:00 UTC'}
+    {n:'Asia',     open: h>=0  && h<9,  h:'00:00-09:00 UTC'},
+    {n:'London',   open: h>=2  && h<11, h:'02:00-11:00 NY'},
+    {n:'New York', open: h>=8  && h<17, h:'08:00-17:00 NY'}
   ];
-  return '<div class="panel"><div class="panel-head"><i class="fa-solid fa-globe"></i><h3>Status Sesi Global</h3><span class="chip mono">'+String(now.getUTCHours()).padStart(2,'0')+':'+String(now.getUTCMinutes()).padStart(2,'0')+' UTC</span></div>'+
-    sess.map(function(s){
-      return '<div class="sess-row"><span class="nm">'+s.n+'</span><span class="hr">'+s.h+'</span>'+
+  var sessNY = [
+    {n:'Asia',     utc:'00:00-09:00 UTC'},
+    {n:'London',   utc:'07:00-16:00 UTC'},
+    {n:'New York', utc:'13:00-22:00 UTC'}
+  ];
+  return '<div class="panel" id="sessions"><div class="panel-head"><i class="fa-solid fa-globe"></i><h3>Status Sesi Global</h3>'+
+    '<span class="chip mono">'+ny.clock+' NY ('+off.label+(off.dst?' EDT':' EST')+')</span></div>'+
+    sess.map(function(s, i){
+      return '<div class="sess-row"><span class="nm">'+s.n+'</span><span class="hr">'+sessNY[i].utc+'</span>'+
         '<span class="badge '+(s.open?'open':'closed')+'">'+(s.open?'Buka':'Tutup')+'</span></div>';
-    }).join('')+'</div>';
+    }).join('')+
+    '<div class="hint" style="margin-top:8px">Zona acuan: America/New_York, DST otomatis (EST UTC-5 / EDT UTC-4).</div>'+
+    '<div class="hint">Trade hari ini (NY): '+countTradesNYToday()+'/3 — sisa '+Math.max(0,3-countTradesNYToday())+'.</div>'+
+    '</div>';
 }
 
-function updateSessions(){
-  var el = document.getElementById('sessions');
-  if (el) el.innerHTML = sessionsHtml();
-  setTimeout(updateSessions, 60000);
-}
+
 function renderTrades(){
   var body = document.getElementById('tradeBody');
   if (!state.trades.length){
@@ -628,11 +680,35 @@ var editingTradeId = null;
 function openTradeModal(id){
   editingTradeId = id || null;
   var t = id ? state.trades.filter(function(x){return x.id===id;})[0] : null;
-  if (!t) t = {date:todayStr(), pair:'XAUUSD', dir:'buy', entry:'', exit:'', sl:'', tp:'', rr:'', result:'win', pnl:'', note:''};
+  if (!t) t = {date:todayStrNY(), pair:'XAUUSD', dir:'buy', entry:'', exit:'', sl:'', tp:'', rr:'', result:'win', pnl:'', note:'', images:[], sopChecks:{narrative:[],profile:[],reversal:[],confirmation:[],wick:null}};
+  var sophist = t.sopChecks || {narrative:[],profile:[],reversal:[],confirmation:[],wick:null};
+  var sopSections = [
+    {grp:'narrative', label:'Narrative', items:['Internal Range Liquidity To Eksternal Range Liquidity','Eksternal Range Liquidity To Internal Range Liquidity','Eksternal Range Liquidity To Eksternal Range Liquidity']},
+    {grp:'profile', label:'Profile', items:['Weakly Profile','Daily Profile','6 Hour Profile','4 Hour Profile','1 Hour Profile']},
+    {grp:'reversal', label:'True Reversal Variant', items:['True Reversal 1','True Reversal 2','True Reversal 3']},
+    {grp:'confirmation', label:'Entry Confirmation', items:['CISD','FVG','Liquidity Sweep','SMT']},
+    {grp:'wick', label:'Wick Size Candle', items:['Small Wick','Large Wick']}
+  ];
+  var sopHtml = sopSections.map(function(sec){
+    var isWick = sec.grp === 'wick';
+    var checks = sophist[sec.grp] || [];
+    return '<div class="sop-section"><h4 style="margin:0 0 6px 0;font-size:12px;font-weight:600;color:var(--accent)">'+escapeHtml(sec.label)+'</h4>'+
+      sec.items.map(function(it){
+        var key = it.replace(/\s+/g,'_').toLowerCase();
+        var ischecked = isWick ? (sophist.wick === key) : (checks.indexOf(key) >= 0);
+        if (isWick){
+          return '<label class="check-item"><input type="radio" name="wickRadio" value="'+key+'" '+(ischecked?'checked':'')+' onchange="updateWick(this.value)"><span>'+escapeHtml(it)+'</span></label>';
+        }
+        return '<label class="check-item"><input type="checkbox" '+(ischecked?'checked':'')+' onchange="toggleSopCheck(\''+sec.grp+'\',\''+key+'\',this.checked)"><span>'+escapeHtml(it)+'</span></label>';
+      }).join('') + '</div>';
+  }).join('');
+  var cnt = countTradesNYToday();
+  var remaining = Math.max(0, 3 - cnt);
   var body =
-    '<div class="field"><label>Tanggal</label><input type="date" id="tDate" value="'+escapeHtml(t.date)+'"></div>'+
+    '<div class="field"><label>Tanggal (NY Time)</label><input type="date" id="tDate" value="'+escapeHtml(t.date)+'" onchange="updateNYInfo()"></div>'+
+    '<div id="nyInfo" class="hint" style="margin-bottom:10px;font-weight:600;color:var(--accent)">Trade hari ini (NY): '+cnt+'/3 — Sisa: '+remaining+'</div>'+
     '<div class="row2"><div class="field"><label>Pair</label><input id="tPair" value="'+escapeHtml(t.pair)+'" placeholder="XAUUSD"></div>'+
-    '<div class="field"><label>RR (risiko:reward)</label><input id="tRR" value="'+escapeHtml(t.rr)+'" placeholder="1:2"></div></div>'+
+    '<div class="field"><label>RR</label><input id="tRR" value="'+escapeHtml(t.rr)+'" placeholder="1:2"></div></div>'+
     '<div class="field"><label>Arah</label><div class="seg" id="tDirSeg">'+
       '<button type="button" class="'+(t.dir==='buy'?'on':'')+'" onclick="setSeg(\'buy\',\'tDirSeg\',\'buy\')">Buy</button>'+
       '<button type="button" class="'+(t.dir==='sell'?'on':'')+'" onclick="setSeg(\'sell\',\'tDirSeg\',\'buy\')">Sell</button></div></div>'+
@@ -644,16 +720,21 @@ function openTradeModal(id){
       '<button type="button" class="'+(t.result==='win'?'on':'')+'" onclick="setSeg(\'win\',\'tResSeg\',\'res\')">Win</button>'+
       '<button type="button" class="'+(t.result==='loss'?'on loss':'')+'" onclick="setSeg(\'loss\',\'tResSeg\',\'res\')">Loss</button>'+
       '<button type="button" class="'+(t.result==='be'?'on be':'')+'" onclick="setSeg(\'be\',\'tResSeg\',\'res\')">BE</button></div></div>'+
-    '<div class="field"><label>P/L (USD)</label><input id="tPnl" value="'+escapeHtml(t.pnl)+'" inputmode="decimal" placeholder="contoh: 24.5 atau -12"><div class="hint">Positif = profit, negatif = loss.</div></div>'+
+    '<div class="field"><label>P/L (USD)</label><input id="tPnl" value="'+escapeHtml(t.pnl)+'" inputmode="decimal" placeholder="24.5 atau -12"><div class="hint">Positif = profit, negatif = loss.</div></div>'+
+    '<div style="background:var(--card-hover);padding:12px;border-radius:var(--radius-md);margin:12px 0">'+
+      '<p style="margin:0 0 10px 0;font-size:12px;font-weight:600;color:var(--accent)">SOP Entry Checklist (per-trade)</p>'+sopHtml+
+    '</div>'+
     '<div class="field"><label>Catatan</label><textarea id="tNote" placeholder="Setup, alasan entry, emosi...">'+escapeHtml(t.note||'')+'</textarea></div>'+
-    '<div class="field"><label>Screenshot (maks. 5)</label><div class="thumbs" id="tShots"></div>'+
-    '<div style="display:flex;gap:8px;align-items:center;margin-top:6px">'+
-    '<button type="button" class="btn btn-xs" onclick="document.getElementById(\'tShotInput\').click()"><i class="fa-solid fa-camera"></i>Tambah Screenshot</button>'+
+    '<div class="field"><label>Screenshot & Analisis (maks. 5)</label><div class="thumbs" id="tShots"></div>'+
+    '<div style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap">'+
+    '<button type="button" class="btn btn-xs" onclick="document.getElementById(\'tShotInput\').click()"><i class="fa-solid fa-camera"></i>Upload Screenshot</button>'+
     '<span class="hint" id="tShotCount"></span></div>'+
+    '<div class="hint" style="margin-top:4px">Vision: kirim screenshot ke Hermes via vision_analyze untuk analisis Narrative/Profile/CISD/FVG/Liquidity Sweep/SMT/Wick.</div>'+
     '<input type="file" id="tShotInput" accept="image/*" multiple style="display:none" onchange="addTradeShots(event)"></div>';
   renderTradeShots(t.images || []);
   openModal(t.id ? 'Edit Trade' : 'Tambah Trade', body,
     '<button class="btn btn-ghost" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="saveTrade()"><i class="fa-solid fa-check"></i>Simpan</button>');
+  updateNYInfo();
 }
 function setSeg(val, segId, kind){
   var seg = document.getElementById(segId); if(!seg) return;
@@ -694,6 +775,26 @@ function addTradeShots(ev){
   ev.target.value = '';
 }
 function delTradeShot(j){ editingShots.splice(j,1); renderTradeShots(editingShots); }
+var sopChecksCache = {narrative:[],profile:[],reversal:[],confirmation:[],wick:null,entry:null};
+function toggleSopCheck(grp, key, checked){
+  if (!sopChecksCache[grp]) sopChecksCache[grp] = [];
+  var idx = sopChecksCache[grp].indexOf(key);
+  if (checked && idx < 0) sopChecksCache[grp].push(key);
+  else if (!checked && idx >= 0) sopChecksCache[grp].splice(idx,1);
+}
+function updateWick(key){ sopChecksCache.wick = key; }
+function updateEntry(key){ sopChecksCache.entry = key; }
+function getSopChecks(){ return JSON.parse(JSON.stringify(sopChecksCache)); }
+function setSopChecks(checks){
+  sopChecksCache = checks || {narrative:[],profile:[],reversal:[],confirmation:[],wick:null,entry:null};
+}
+function updateNYInfo(){
+  var date = document.getElementById('tDate').value;
+  var cnt = (state.trades || []).filter(function(t){ return getNYDate(t.date) === getNYDate(date); }).length;
+  var remaining = Math.max(0, 3 - cnt);
+  var el = document.getElementById('nyInfo');
+  if (el) el.textContent = 'Trade hari ini (NY): '+cnt+'/3 — Sisa: '+remaining;
+}
 function saveTrade(){
   var pnlRaw = document.getElementById('tPnl').value.trim();
   var pnl = pnlRaw === '' ? 0 : num(pnlRaw);
