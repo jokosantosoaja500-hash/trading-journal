@@ -49,24 +49,6 @@ body{
   background-image:radial-gradient(rgba(255,255,255,.055) 1px,transparent 1px);
   background-size:32px 32px;}
 /* scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: #151824;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #3b82f6;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #2563eb;
-}
 ::-webkit-scrollbar{width:8px;height:8px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:8px}
@@ -131,16 +113,16 @@ main{padding:16px;max-width:1440px;margin:0 auto;padding-bottom:calc(96px + var(
 .stat .strip{position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:0 4px 4px 0}
 .pos{color:var(--profit)} .neg{color:var(--loss)} .neutral{color:var(--fg-subtle)}
 /* panels */
-.panels{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px;align-items:start}
+.panels{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px}
 @media(min-width:768px){.panels{grid-template-columns:1fr 1fr}}
 @media(min-width:1024px){.panels{grid-template-columns:repeat(3,1fr)}}
-.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow-card);display:flex;flex-direction:column}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow-card);display:flex;flex-direction:column;min-height:180px}
 .panel-head{display:flex;align-items:center;gap:9px;margin-bottom:12px}
 .panel-head i{font-size:14px;color:var(--accent)}
 .panel-head h3{margin:0;font-size:13.5px;font-weight:700;letter-spacing:-.2px;flex:1}
 .chip{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--bg-subtle);color:var(--fg-subtle);border:1px solid var(--border);white-space:nowrap}
 .chip.done{background:var(--profit-bg);color:var(--profit);border-color:rgba(16,185,129,.3)}
-.check-list{display:flex;flex-direction:column;gap:5px}
+.check-list{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto}
 .check-item{display:flex;align-items:flex-start;gap:9px;padding:7px 9px;border-radius:8px;transition:.14s;cursor:pointer}
 .check-item:hover{background:var(--bg-subtle)}
 .check-item.on{background:var(--accent-bg)}
@@ -258,32 +240,14 @@ tbody tr:hover{background:var(--bg-subtle)}
 .panel,.stat,.chart-card,.table-card{transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
 .empty{background:var(--card-hover);border:1px dashed var(--border-hover);border-radius:var(--radius-md);padding:28px 18px}
 .empty i{font-size:30px;opacity:.5;margin-bottom:10px}
-.sop-group{background:var(--bg-subtle);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 10px 8px;margin-bottom:8px}
-.sop-group:last-child{margin-bottom:0}
+.sop-group{padding:8px 0 10px;border-bottom:1px solid var(--border)}
+.sop-group:last-child{border-bottom:0}
 .check-item{transition:background .15s ease,transform .15s ease}
 .check-item:has(input:checked){background:var(--accent-bg)}
 .modal-body{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}
 *:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-/* redesign v2: fill empty areas */
-.chart-empty{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--muted);font-size:12px;text-align:center;padding:12px}
-.chart-empty i{font-size:26px;opacity:.45}
-.chart-card.is-empty .chart-empty{display:flex}
-.chart-card.is-empty canvas{visibility:hidden}
-.sop-section{background:var(--bg-subtle);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 10px 8px;margin-bottom:10px}
-.sop-section:last-child{margin-bottom:0}
-/* modern scrollbar */
-::-webkit-scrollbar{width:8px;height:8px}
-::-webkit-scrollbar-track{background:#151824;border-radius:4px}
-::-webkit-scrollbar-thumb{background:#3b82f6;border-radius:4px}
-::-webkit-scrollbar-thumb:hover{background:#2563eb}
-/* screenshot */
-.screenshot-container{background:rgba(255,255,255,0.05);border-radius:var(--radius-md);padding:1rem;margin-top:1rem}
-.screenshot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:0.5rem;margin-bottom:1rem}
-.screenshot-thumbnail{width:100%;height:100px;object-fit:cover;border-radius:var(--radius-sm);cursor:pointer}
-.sop-summary{margin-top:1rem;padding:1rem;background:rgba(255,255,255,0.05);border-radius:var(--radius-md)}
-.screenshot-summary{margin-top:1rem;padding:1rem;background:rgba(255,255,255,0.05);border-radius:var(--radius-md)}
-.thumbnail{width:50px;height:50px;object-fit:cover;border-radius:var(--radius-sm);margin-right:0.5rem;cursor:pointer}</style>
+</style>
 </head>
 <body>
 <div class="bg-blob a"></div><div class="bg-blob b"></div><div class="bg-blob c"></div><div class="bg-dots"></div>
@@ -322,11 +286,11 @@ tbody tr:hover{background:var(--bg-subtle)}
   <div class="charts">
     <div class="chart-card">
       <div class="chart-head"><i class="fa-solid fa-chart-line" style="color:var(--profit)"></i><h3>Equity Curve</h3><span class="chip mono" id="equityChip">—</span></div>
-      <div class="chart-body"><canvas id="equityChart"></canvas><div class="chart-empty"><i class="fa-regular fa-chart-line"></i><span>Belum ada data — tambah trade pertama</span></div></div>
+      <div class="chart-body"><canvas id="equityChart"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-head"><i class="fa-solid fa-chart-pie" style="color:var(--purple)"></i><h3>Win/Loss Distribution</h3></div>
-      <div class="chart-body doughnut"><canvas id="distChart"></canvas><div class="chart-empty"><i class="fa-regular fa-chart-pie"></i><span>Belum ada trade — distribusi W/L</span></div></div>
+      <div class="chart-body doughnut"><canvas id="distChart"></canvas></div>
     </div>
   </div>
 
@@ -418,21 +382,12 @@ function storage(){ return (typeof localforage !== 'undefined' && localforage) ?
 
 function migrateState(){
   var groups = ['narrative','profile','reversal','confirmation','wick','entry'];
-  if (!Array.isArray(state.sop) || !state.sop.length){
+  var ok = Array.isArray(state.sop) && state.sop.length &&
+    groups.every(function(g){ return state.sop.some(function(it){ return it.group === g; }); });
+  if (!ok) {
     state.sop = JSON.parse(JSON.stringify(DEFAULT_SOP));
-    saveState(); return;
+    saveState();
   }
-  var changed = false;
-  groups.forEach(function(g){
-    var has = state.sop.some(function(it){ return it.group === g; });
-    if (!has){
-      DEFAULT_SOP.forEach(function(d){
-        if (d.group === g) state.sop.push({text:d.text, done:false, group:g, images:[]});
-      });
-      changed = true;
-    }
-  });
-  if (changed) saveState();
 }
 function loadState(){
   return storage().getItem(LS_KEY).then(function(saved){
@@ -647,23 +602,7 @@ function renderTrades(){
 }
 
 /* ============ CHARTS ============ */
-function setChartEmpty(canvasId, empty){
-  var c = document.getElementById(canvasId); if (!c) return;
-  var card = c.closest ? c.closest('.chart-card') : null;
-  if (card) card.classList.toggle('is-empty', !!empty);
-}
 function renderCharts(){
-  var s0 = computeStats();
-  var noData = !state.trades.length && !state.transactions.length;
-  setChartEmpty('equityChart', noData);
-  setChartEmpty('distChart', noData);
-  if (noData){
-    if (charts.equity){ charts.equity.destroy(); charts.equity = null; }
-    if (charts.dist){ charts.dist.destroy(); charts.dist = null; }
-    var chip0 = document.getElementById('equityChip');
-    if (chip0) chip0.textContent = fmtMoney(s0.initial);
-    return;
-  }
   if (typeof Chart === 'undefined') return;
   var s = computeStats();
   var events = [];
@@ -907,58 +846,7 @@ function updateNYInfo(){
   var el = document.getElementById('nyInfo');
   if (el) el.textContent = 'Trade hari ini (NY): '+cnt+'/3 — Sisa: '+remaining;
 }
-function displayTrades() {
-    // existing display logic...
-    if (trade.sopData) {
-        tradeElement.innerHTML += `
-            <div class="sop-summary">
-                <h4>SOP Summary</h4>
-                <p><strong>Narrative:</strong> ${getSopSummary(trade.sopData.narrative)}</p>
-                <p><strong>Profile:</strong> ${getSopSummary(trade.sopData.profile)}</p>
-                <p><strong>True Reversal:</strong> ${getSopSummary(trade.sopData.trueReversal)}</p>
-                <p><strong>Entry Confirmation:</strong> ${getSopSummary(trade.sopData.entryConfirmation)}</p>
-                <p><strong>Wick Size:</strong> ${getSopSummary(trade.sopData.wickSize)}</p>
-                <p><strong>Entry:</strong> ${getSopSummary(trade.sopData.entry)}</p>
-            </div>
-        `;
-    }
-    if (trade.screenshots && trade.screenshots.length > 0) {
-        tradeElement.innerHTML += `
-            <div class="screenshot-summary">
-                <h4>Screenshots (${trade.screenshots.length})</h4>
-                <div class="screenshot-thumbnails">
-                    ${trade.screenshots.map(src => `<img src="${src}" class="thumbnail">`).join('')}
-                </div>
-            </div>
-        `;
-    }
-}
-    // ... existing code ...
-    if (trade.sopData) {
-        tradeElement.innerHTML += `
-            <div class="sop-summary">
-                <h4>SOP Summary</h4>
-                <p><strong>Narrative:</strong> ${getSopSummary(trade.sopData.narrative)}</p>
-                <p><strong>Profile:</strong> ${getSopSummary(trade.sopData.profile)}</p>
-                <p><strong>True Reversal:</strong> ${getSopSummary(trade.sopData.trueReversal)}</p>
-                <p><strong>Entry Confirmation:</strong> ${getSopSummary(trade.sopData.entryConfirmation)}</p>
-                <p><strong>Wick Size:</strong> ${getSopSummary(trade.sopData.wickSize)}</p>
-                <p><strong>Entry:</strong> ${getSopSummary(trade.sopData.entry)}</p>
-            </div>
-        `;
-    }
-    
-    if (trade.screenshots && trade.screenshots.length > 0) {
-        tradeElement.innerHTML += `
-            <div class="screenshot-summary">
-                <h4>Screenshots (${trade.screenshots.length})</h4>
-                <div class="screenshot-thumbnails">
-                    ${trade.screenshots.map(src => `<img src="${src}" class="thumbnail">`).join("")}
-                </div>
-            </div>
-        `;
-    }
-}
+function saveTrade(){
   var pnlRaw = document.getElementById('tPnl').value.trim();
   var pnl = pnlRaw === '' ? 0 : num(pnlRaw);
   var obj = {
