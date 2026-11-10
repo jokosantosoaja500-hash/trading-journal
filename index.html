@@ -82,7 +82,7 @@ header{
 .btn-danger:hover{background:rgba(244,63,94,.2)}
 .btn-icon{width:36px;height:36px;padding:0;border-radius:var(--radius-sm);font-size:14px}
 .btn-xs{height:30px;padding:0 10px;font-size:12px;border-radius:8px}
-main{padding:16px;max-width:1800px;margin:0 auto;padding-bottom:calc(96px + var(--safe-bottom))}
+main{padding:14px;max-width:1800px;margin:0 auto;padding-bottom:calc(96px + var(--safe-bottom))}
 @media(min-width:768px){main{padding:24px}}
 /* banner */
 #libBanner{display:none;background:var(--loss-bg);border:1px solid rgba(244,63,94,.3);color:#fda4af;padding:10px 14px;border-radius:var(--radius-md);font-size:12.5px;margin-bottom:12px;display:none;align-items:center;gap:9px}
@@ -97,7 +97,7 @@ main{padding:16px;max-width:1800px;margin:0 auto;padding-bottom:calc(96px + var(
 .sync-dot.err{background:var(--loss);box-shadow:0 0 8px rgba(244,63,94,.7)}
 .sync-dot.pending{background:var(--warn);box-shadow:0 0 8px rgba(245,158,11,.7)}
 /* stats */
-.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 @media(min-width:768px){.stat-grid{grid-template-columns:repeat(3,1fr);gap:12px}}
 @media(min-width:1024px){.stat-grid{grid-template-columns:repeat(6,1fr)}}
 @media(min-width:1024px){.stat.big{grid-column:span 1}}
@@ -114,9 +114,12 @@ main{padding:16px;max-width:1800px;margin:0 auto;padding-bottom:calc(96px + var(
 .stat .strip{position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:0 4px 4px 0}
 .pos{color:var(--profit)} .neg{color:var(--loss)} .neutral{color:var(--fg-subtle)}
 /* panels */
-.panels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:16px;align-items:start;width:100%;max-width:none}
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;align-items:start;width:100%;max-width:none}
 @media(max-width:1023px){.panels{grid-template-columns:1fr}}
-.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow-card);display:flex;flex-direction:column;height:auto}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;box-shadow:var(--shadow-card);display:flex;flex-direction:column;height:auto}
+.panel-rules{grid-column:1;grid-row:1;align-self:stretch}
+.panel-sessions{grid-column:1;grid-row:2;align-self:stretch}
+.panel-sop{grid-column:2;grid-row:1/span 2;align-self:stretch}
 .panel-head{display:flex;align-items:center;gap:9px;margin-bottom:12px}
 .panel-head i{font-size:14px;color:var(--accent)}
 .panel-head h3{margin:0;font-size:13.5px;font-weight:700;letter-spacing:-.2px;flex:1}
@@ -143,7 +146,7 @@ main{padding:16px;max-width:1800px;margin:0 auto;padding-bottom:calc(96px + var(
 .badge.open{background:var(--profit-bg);color:var(--profit)}
 .badge.closed{background:var(--bg-subtle);color:var(--muted)}
 /* charts */
-.charts{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px}
+.charts{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px}
 @media(min-width:768px){.charts{grid-template-columns:2fr 1fr}}
 .chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow-card)}
 .chart-head{display:flex;align-items:center;gap:9px;margin-bottom:12px}
@@ -505,12 +508,12 @@ function renderStats(){
 }
 function renderPanels(){
   var el = document.getElementById('panels');
-  el.innerHTML = panelHtml('rules','Trading Rules','fa-scale-balanced',state.rules) +
+  el.innerHTML = panelHtml('rules','Trading Rules','fa-scale-balanced',state.rules, null, 'panel-rules') +
                  sessionsHtml() +
-                 panelHtml('sop','SOP Entry','fa-list-check',state.sop) +
+                 panelHtml('sop','SOP Entry','fa-list-check',state.sop, null, 'panel-sop') +
   renderThumbs();
 }
-function panelHtml(key, title, icon, list, sopGroup){
+function panelHtml(key, title, icon, list, sopGroup, panelClass){
   var done = list.filter(function(i){return i.done;}).length;
   var all = list.length && done === list.length;
   var sections = [];
@@ -541,7 +544,7 @@ function panelHtml(key, title, icon, list, sopGroup){
     }).join('') || '<div class="empty">Belum ada item</div>')+'</div>');
   }
   var headerChip = (key==='sop' || sopGroup) ? (sopGroup?'<span class="chip '+(all?'done':'')+'">'+done+'/'+list.length+'</span>':'') : '<span class="chip '+(all?'done':'')+'">'+done+'/'+list.length+'</span>';
-  return '<div class="panel"><div class="panel-head"><i class="fa-solid '+icon+'"></i><h3>'+escapeHtml(title)+'</h3>'+headerChip+'</div>'
+  return '<div class="panel '+(panelClass||"")+'"><div class="panel-head"><i class="fa-solid '+icon+'"></i><h3>'+escapeHtml(title)+'</h3>'+headerChip+'</div>'
     +sections.join('')
     +'<div style="margin-top:auto;padding-top:10px"><button class="btn btn-xs" onclick="openListModal(\''+key+'\')"><i class="fa-solid fa-pen"></i>Kelola</button></div></div>';
 }
@@ -586,7 +589,7 @@ function sessionsHtml(){
     {n:'London',   utc:'07:00-16:00 UTC'},
     {n:'New York', utc:'13:00-22:00 UTC'}
   ];
-  return '<div class="panel" id="sessions"><div class="panel-head"><i class="fa-solid fa-globe"></i><h3>Status Sesi Global</h3>'+
+  return '<div class="panel panel-sessions" id="sessions"><div class="panel-head"><i class="fa-solid fa-globe"></i><h3>Status Sesi Global</h3>'+
     '<span class="chip mono">'+ny.clock+' NY ('+off.label+(off.dst?' EDT':' EST')+')</span></div>'+
     sess.map(function(s, i){
       return '<div class="sess-row"><span class="nm">'+s.n+'</span><span class="hr">'+sessNY[i].utc+'</span>'+
