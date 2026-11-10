@@ -520,7 +520,7 @@ function panelHtml(key, title, icon, list, sopGroup){
       if (gi < 0) return '';
       return '<label class="check-item '+(it.done?'on':'')+'"><input type="checkbox" '+(it.done?'checked':'')+
         ' onchange="toggleCheck(\'sop\','+gi+',this.checked)"><span>'+escapeHtml(it.text)+'</span></label>';
-    }).join('') || '<div class="empty">Belum ada item</div>'))+'</div>';
+    }).join('') || '<div class="empty">Belum ada item</div>')+'</div>');
   } else if (key === 'sop'){
     var groups = ['narrative','profile','reversal','confirmation','wick','entry'];
     var labels = {narrative:'Narrative',profile:'Profile',reversal:'True Reversal Variant',confirmation:'Entry Confirmation',wick:'Wick Size Candle',entry:'Entry'};
@@ -538,7 +538,7 @@ function panelHtml(key, title, icon, list, sopGroup){
     sections.push('<div class="check-list">'+(list.map(function(it,i){
       return '<label class="check-item '+(it.done?'on':'')+'"><input type="checkbox" '+(it.done?'checked':'')+
         ' onchange="toggleCheck(\''+key+'\','+i+',this.checked)"><span>'+escapeHtml(it.text)+'</span></label>';
-    }).join('') || '<div class="empty">Belum ada item</div>'))+'</div>';
+    }).join('') || '<div class="empty">Belum ada item</div>')+'</div>');
   }
   var headerChip = (key==='sop' || sopGroup) ? (sopGroup?'<span class="chip '+(all?'done':'')+'">'+done+'/'+list.length+'</span>':'') : '<span class="chip '+(all?'done':'')+'">'+done+'/'+list.length+'</span>';
   return '<div class="panel"><div class="panel-head"><i class="fa-solid '+icon+'"></i><h3>'+escapeHtml(title)+'</h3>'+headerChip+'</div>'
