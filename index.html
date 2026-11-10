@@ -506,8 +506,8 @@ function renderStats(){
 function renderPanels(){
   var el = document.getElementById('panels');
   el.innerHTML = panelHtml('rules','Trading Rules','fa-scale-balanced',state.rules) +
+                 sessionsHtml() +
                  panelHtml('sop','SOP Entry','fa-list-check',state.sop) +
-                 sessionsHtml();
   renderThumbs();
 }
 function panelHtml(key, title, icon, list, sopGroup){
