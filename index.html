@@ -82,7 +82,7 @@ header{
 .btn-danger:hover{background:rgba(244,63,94,.2)}
 .btn-icon{width:36px;height:36px;padding:0;border-radius:var(--radius-sm);font-size:14px}
 .btn-xs{height:30px;padding:0 10px;font-size:12px;border-radius:8px}
-main{padding:16px;max-width:1440px;margin:0 auto;padding-bottom:calc(96px + var(--safe-bottom))}
+main{padding:16px;max-width:1800px;margin:0 auto;padding-bottom:calc(96px + var(--safe-bottom))}
 @media(min-width:768px){main{padding:24px}}
 /* banner */
 #libBanner{display:none;background:var(--loss-bg);border:1px solid rgba(244,63,94,.3);color:#fda4af;padding:10px 14px;border-radius:var(--radius-md);font-size:12.5px;margin-bottom:12px;display:none;align-items:center;gap:9px}
@@ -114,10 +114,10 @@ main{padding:16px;max-width:1440px;margin:0 auto;padding-bottom:calc(96px + var(
 .stat .strip{position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:0 4px 4px 0}
 .pos{color:var(--profit)} .neg{color:var(--loss)} .neutral{color:var(--fg-subtle)}
 /* panels */
-.panels{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px;align-items:stretch;max-width:100%}
+.panels{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:16px;align-items:stretch;width:100%}
 @media(min-width:768px){.panels{grid-template-columns:1fr 1fr}}
-@media(min-width:1024px){.panels{grid-template-columns:repeat(4,1fr)}}
-.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow-card);display:flex;flex-direction:column;height:100%}
+@media(min-width:1024px){.panels{grid-template-columns:1fr 2fr}}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow-card);display:flex;flex-direction:column;height:auto}
 .panel-head{display:flex;align-items:center;gap:9px;margin-bottom:12px}
 .panel-head i{font-size:14px;color:var(--accent)}
 .panel-head h3{margin:0;font-size:13.5px;font-weight:700;letter-spacing:-.2px;flex:1}
@@ -241,7 +241,7 @@ tbody tr:hover{background:var(--bg-subtle)}
 .panel,.stat,.chart-card,.table-card{transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
 .empty{background:var(--card-hover);border:1px dashed var(--border-hover);border-radius:var(--radius-md);padding:28px 18px}
 .empty i{font-size:30px;opacity:.5;margin-bottom:10px}
-.sop-group{background:var(--bg-subtle);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 10px 8px;margin-bottom:8px}
+.sop-group{padding:10px 0 12px;margin-bottom:4px;border-bottom:1px solid var(--border)}
 .sop-group:last-child{border-bottom:0}
 .check-item{transition:background .15s ease,transform .15s ease}
 .check-item:has(input:checked){background:var(--accent-bg)}
@@ -506,14 +506,8 @@ function renderStats(){
 }
 function renderPanels(){
   var el = document.getElementById('panels');
-  var grp = function(g){ return state.sop.filter(function(it){return it.group===g;}); };
   el.innerHTML = panelHtml('rules','Trading Rules','fa-scale-balanced',state.rules) +
-                 panelHtml('sop-narrative','Narrative','fa-route',grp('narrative'),'narrative') +
-                 panelHtml('sop-profile','Profile','fa-layer-group',grp('profile'),'profile') +
-                 panelHtml('sop-reversal','True Reversal Variant','fa-arrows-rotate',grp('reversal'),'reversal') +
-                 panelHtml('sop-confirmation','Entry Confirmation','fa-circle-check',grp('confirmation'),'confirmation') +
-                 panelHtml('sop-wick','Wick Size Candle','fa-chart-simple',grp('wick'),'wick') +
-                 panelHtml('sop-entry','Entry','fa-flag-checkered',grp('entry'),'entry') +
+                 panelHtml('sop','SOP Entry','fa-list-check',state.sop) +
                  sessionsHtml();
   renderThumbs();
 }
