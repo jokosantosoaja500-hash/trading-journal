@@ -114,9 +114,8 @@ main{padding:16px;max-width:1800px;margin:0 auto;padding-bottom:calc(96px + var(
 .stat .strip{position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:0 4px 4px 0}
 .pos{color:var(--profit)} .neg{color:var(--loss)} .neutral{color:var(--fg-subtle)}
 /* panels */
-.panels{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:16px;align-items:stretch;width:100%}
-@media(min-width:768px){.panels{grid-template-columns:1fr 1fr}}
-@media(min-width:1024px){.panels{grid-template-columns:1fr 2fr}}
+.panels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:16px;align-items:start;width:100%;max-width:none}
+@media(max-width:1023px){.panels{grid-template-columns:1fr}}
 .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow-card);display:flex;flex-direction:column;height:auto}
 .panel-head{display:flex;align-items:center;gap:9px;margin-bottom:12px}
 .panel-head i{font-size:14px;color:var(--accent)}
@@ -516,12 +515,12 @@ function panelHtml(key, title, icon, list, sopGroup){
   var all = list.length && done === list.length;
   var sections = [];
   if (sopGroup){
-    sections.push('<div class="check-list">'+list.map(function(it){
+    sections.push('<div class="check-list">'+(list.map(function(it){
       var gi = state.sop.indexOf(it);
       if (gi < 0) return '';
       return '<label class="check-item '+(it.done?'on':'')+'"><input type="checkbox" '+(it.done?'checked':'')+
         ' onchange="toggleCheck(\'sop\','+gi+',this.checked)"><span>'+escapeHtml(it.text)+'</span></label>';
-    }).join('') || '<div class="empty">Belum ada item</div>')+'</div>';
+    }).join('') || '<div class="empty">Belum ada item</div>'))+'</div>';
   } else if (key === 'sop'){
     var groups = ['narrative','profile','reversal','confirmation','wick','entry'];
     var labels = {narrative:'Narrative',profile:'Profile',reversal:'True Reversal Variant',confirmation:'Entry Confirmation',wick:'Wick Size Candle',entry:'Entry'};
@@ -536,10 +535,10 @@ function panelHtml(key, title, icon, list, sopGroup){
         }).join('')+'</div></div>');
     });
   } else {
-    sections.push('<div class="check-list">'+list.map(function(it,i){
+    sections.push('<div class="check-list">'+(list.map(function(it,i){
       return '<label class="check-item '+(it.done?'on':'')+'"><input type="checkbox" '+(it.done?'checked':'')+
         ' onchange="toggleCheck(\''+key+'\','+i+',this.checked)"><span>'+escapeHtml(it.text)+'</span></label>';
-    }).join('') || '<div class="empty">Belum ada item</div>')+'</div>';
+    }).join('') || '<div class="empty">Belum ada item</div>'))+'</div>';
   }
   var headerChip = (key==='sop' || sopGroup) ? (sopGroup?'<span class="chip '+(all?'done':'')+'">'+done+'/'+list.length+'</span>':'') : '<span class="chip '+(all?'done':'')+'">'+done+'/'+list.length+'</span>';
   return '<div class="panel"><div class="panel-head"><i class="fa-solid '+icon+'"></i><h3>'+escapeHtml(title)+'</h3>'+headerChip+'</div>'
@@ -559,14 +558,13 @@ function renderThumbs(){
   // no-op: gambar tampil di modal kelola
 }
 function nyParts(){
-  var now = new Date();
-  var opts = {timeZone:'America/New_York', hour12:false, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'};
-  var str = now.toLocaleString('en-US', opts);
-  var p = str.split(/[\s,/-]+/);
-  return {
-    month:p[0], day:p[1], year:p[2], hour:String(parseInt(p[3],10)).padStart(2,'0'), minute:p[4],
-    clock:String(parseInt(p[3],10)).padStart(2,'0')+':'+p[4]
-  };
+  var str = new Date().toLocaleString('en-US', {timeZone:'America/New_York', hour12:false,
+    year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'});
+  var bits = str.split(', ');
+  var d = bits[0].split('/'), t = (bits[1]||'00:00').split(':');
+  var hh = String(parseInt(t[0],10)%24).padStart(2,'0');
+  var mm = String(parseInt(t[1]||'0',10)).padStart(2,'0');
+  return {month:d[0], day:d[1], year:d[2], hour:hh, minute:mm, clock:hh+':'+mm};
 }
 function nyOffset(){
   var now = new Date();
