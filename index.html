@@ -118,9 +118,15 @@ main{padding:12px;max-width:1800px;margin:0 auto;padding-bottom:calc(90px + var(
 @media(max-width:1023px){.panels{grid-template-columns:1fr}}
 .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;box-shadow:var(--shadow-card);display:flex;flex-direction:column;height:auto}
 .panel-rules{grid-column:1;grid-row:1;align-self:stretch}
-.panel-sessions{grid-column:1;grid-row:2;align-self:stretch}
-.panel-sop{grid-column:2;grid-row:1/span 2;align-self:stretch}
-.panel-cal{grid-column:3;grid-row:1/span 2;align-self:stretch}
+.panel-sessions{grid-column:2;grid-row:1;align-self:stretch}
+.panel-cal{grid-column:3;grid-row:1;align-self:stretch}
+.panel-sop{grid-column:1/-1;grid-row:2;align-self:stretch;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.panel-sop .panel-head,.panel-sop > div:last-child{grid-column:1/-1}
+@media(max-width:1023px){
+  .panel-rules,.panel-sessions,.panel-cal,.panel-sop{grid-column:1;grid-row:auto}
+  .panel-sop{grid-template-columns:1fr}
+  .panel-sop .panel-head,.panel-sop > div:last-child{grid-column:1}
+}
 .cal-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:8px}
 .cal-head .cal-month{font-size:13px;font-weight:700;flex:1;text-align:center}
 .cal-nav{width:28px;height:28px;border:1px solid var(--border);background:var(--bg-subtle);color:var(--fg);border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
@@ -266,7 +272,7 @@ tbody tr:hover{background:var(--bg-subtle)}
 .panel,.stat,.chart-card,.table-card{transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
 .empty{background:var(--card-hover);border:1px dashed var(--border-hover);border-radius:var(--radius-md);padding:28px 18px}
 .empty i{font-size:30px;opacity:.5;margin-bottom:10px}
-.sop-group{padding:6px 0 8px;margin-bottom:2px;border-bottom:1px solid var(--border)}
+.sop-group{padding:8px 10px;margin:0;background:var(--bg-subtle);border:1px solid var(--border);border-radius:10px;min-width:0}
 .sop-group:last-child{border-bottom:0}
 .check-item{transition:background .15s ease,transform .15s ease}
 .check-item:has(input:checked){background:var(--accent-bg)}
